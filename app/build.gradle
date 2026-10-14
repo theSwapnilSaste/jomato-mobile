@@ -20,12 +20,15 @@ android {
         }
 
         def localProps = new Properties()
-        localProps.load(new FileInputStream(rootProject.file("local.properties")))
-        buildConfigField "String", "WORKER_URL", "\"${localProps['WORKER_URL']}\""
-        buildConfigField "String", "FOOD_RESCUE_METRICS_URL", "\"${localProps['FOOD_RESCUE_METRICS_URL']}\""
-        buildConfigField "String", "FALLBACK_UPDATE_URL", "\"${localProps['FALLBACK_UPDATE_URL']}\""
-        buildConfigField "String", "UI_JSON_HOST_PRIMARY", "\"${localProps['UI_JSON_HOST_PRIMARY']}\""
-        buildConfigField "String", "UI_JSON_HOST_FALLBACK", "\"${localProps['UI_JSON_HOST_FALLBACK']}\""
+        def localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(new FileInputStream(localPropsFile))
+        }
+        buildConfigField "String", "WORKER_URL", "\"${localProps.getProperty('WORKER_URL', '')}\""
+        buildConfigField "String", "FOOD_RESCUE_METRICS_URL", "\"${localProps.getProperty('FOOD_RESCUE_METRICS_URL', '')}\""
+        buildConfigField "String", "FALLBACK_UPDATE_URL", "\"${localProps.getProperty('FALLBACK_UPDATE_URL', '')}\""
+        buildConfigField "String", "UI_JSON_HOST_PRIMARY", "\"${localProps.getProperty('UI_JSON_HOST_PRIMARY', '')}\""
+        buildConfigField "String", "UI_JSON_HOST_FALLBACK", "\"${localProps.getProperty('UI_JSON_HOST_FALLBACK', '')}\""
 
     }
 
