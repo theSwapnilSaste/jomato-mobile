@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "name": "Jomato",
+    "request_feature_url": "https://github.com/jatin-dot-py/jomato-mobile/issues/new?title=%5BFeature%20Request%5D%20Short%20description%20here%20&body=Describe%20the%20feature."
+  },
+  "entities": {
+    "zomato": {
+      "name": "Zomato",
+      "max_accounts": 2,
+      "healthy": true,
+      "color": "#CB202D",
+      "enabled": true,
+      "features": {
+        "zomato_food_rescue": {
+          "name": "Food Rescue",
+          "login_required": true,
+          "description": "Find Food Rescue offers near you."
+        }
+      }
+    }
+  }
+}

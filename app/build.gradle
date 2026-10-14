@@ -27,9 +27,19 @@ android {
         buildConfigField "String", "WORKER_URL", "\"${localProps.getProperty('WORKER_URL', '')}\""
         buildConfigField "String", "FOOD_RESCUE_METRICS_URL", "\"${localProps.getProperty('FOOD_RESCUE_METRICS_URL', '')}\""
         buildConfigField "String", "FALLBACK_UPDATE_URL", "\"${localProps.getProperty('FALLBACK_UPDATE_URL', '')}\""
-        buildConfigField "String", "UI_JSON_HOST_PRIMARY", "\"${localProps.getProperty('UI_JSON_HOST_PRIMARY', '')}\""
-        buildConfigField "String", "UI_JSON_HOST_FALLBACK", "\"${localProps.getProperty('UI_JSON_HOST_FALLBACK', '')}\""
 
+    }
+
+    signingConfigs {
+        release {
+            def releaseStoreFile = System.getenv("RELEASE_STORE_FILE")
+            if (releaseStoreFile) {
+                storeFile file(releaseStoreFile)
+                storePassword System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -37,6 +47,7 @@ android {
             buildConfigField "boolean", "IS_DEV", "true"
         }
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "boolean", "IS_DEV", "false"

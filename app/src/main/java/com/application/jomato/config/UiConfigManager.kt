@@ -1,56 +1,39 @@
 package com.application.jomato.config
 
 import android.content.Context
-import com.application.jomato.BuildConfig
 import com.application.jomato.utils.FileLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
 import java.security.MessageDigest
 
 /**
- * Singleton that fetches ui config from the server and runs integrity checks.
- * Use [fetch] then [checkIntegrity] (integrity uses the digest of the installed APK, computed internally).
+ * Singleton that loads bundled UI config and runs optional integrity checks.
+ * Use [fetch] then [checkIntegrity] when the bundled config provides integrity metadata.
  */
 object UiConfigManager {
 
     private const val TAG = "UiConfigManager"
-    private const val PATH = "/ui.json"
-
-    private val client = OkHttpClient()
     private val json = Json { ignoreUnknownKeys = true }
 
     var config: UiConfig? = null
         private set
 
     suspend fun fetch(context: Context) {
-        val hosts = listOf(
-            "https://${BuildConfig.UI_JSON_HOST_PRIMARY}",
-            "https://${BuildConfig.UI_JSON_HOST_FALLBACK}"
-        )
-
-        for (host in hosts) {
-            try {
-                val request = Request.Builder().url("$host$PATH").build()
-                val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
-                if (!response.isSuccessful) { response.close(); continue }
-                val body = response.body?.string()
-                response.close()
-                if (body.isNullOrBlank()) continue
-                config = json.decodeFromString<UiConfig>(body)
-                EntityRegistry.updateFrom(config)
-                FileLogger.log(context, TAG, "ui fetched from $host")
-                return
-            } catch (e: Exception) {
-                FileLogger.log(context, TAG, "Failed to fetch from $host | ${e.message}", e)
-                continue
+        try {
+            val body = withContext(Dispatchers.IO) {
+                context.assets.open("ui.json").bufferedReader().use { it.readText() }
             }
+            val loadedConfig = json.decodeFromString<UiConfig>(body)
+            config = loadedConfig
+            EntityRegistry.updateFrom(loadedConfig)
+            FileLogger.log(context, TAG, "Loaded bundled ui.json")
+        } catch (e: Exception) {
+            config = null
+            EntityRegistry.updateFrom(null)
+            FileLogger.log(context, TAG, "Failed to load bundled ui.json | ${e.message}", e)
         }
-
-        FileLogger.log(context, TAG, "All hosts failed, running without ui.json")
     }
 
     /**
@@ -58,13 +41,13 @@ object UiConfigManager {
      * Call after [fetch]; uses [config] from the last successful fetch.
      */
     fun checkIntegrity(context: Context): IntegrityResult {
-        val installedDigest = installedApkDigest(context) ?: run {
-            FileLogger.log(context, TAG, "Could not compute APK digest, skipping integrity check")
+        val integrity = config?.integrity ?: run {
+            FileLogger.log(context, TAG, "No integrity metadata, skipping integrity check")
             return IntegrityResult.Unknown
         }
 
-        val integrity = config?.integrity ?: run {
-            FileLogger.log(context, TAG, "No config loaded, skipping integrity check")
+        val installedDigest = installedApkDigest(context) ?: run {
+            FileLogger.log(context, TAG, "Could not compute APK digest, skipping integrity check")
             return IntegrityResult.Unknown
         }
 

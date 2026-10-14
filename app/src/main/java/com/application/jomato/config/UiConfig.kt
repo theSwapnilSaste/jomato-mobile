@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class UiConfig(
-    val integrity: Integrity,
+    val integrity: Integrity? = null,
     val widgets: List<WidgetConfig> = emptyList(),
     val metadata: Metadata? = null,
     val entities: Map<String, EntityConfig> = emptyMap()
